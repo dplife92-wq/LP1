@@ -12,6 +12,27 @@
    <link rel="preconnect" href="https://fonts.googleapis.com">
    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
+   
+   <!-- Meta Pixel Code -->
+   <script>
+   !function(f,b,e,v,n,t,s)
+   {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+   n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+   if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+   n.queue=[];t=b.createElement(e);t.async=!0;
+   t.src=v;s=b.getElementsByTagName(e)[0];
+   s.parentNode.insertBefore(t,s)}(window, document,'script',
+   'https://connect.facebook.net/en_US/fbevents.js');
+
+   fbq('init', '622556504251195');
+   fbq('track', 'PageView');
+   </script>
+
+   <noscript>
+     <img height="1" width="1" style="display:none"
+          src="https://www.facebook.com/tr?id=622556504251195&ev=PageView&noscript=1" />
+   </noscript>
+   <!-- End Meta Pixel Code -->
    <style>
        html {
            -webkit-text-size-adjust: 100%;
@@ -1324,3 +1345,156 @@
 
                        setDeadline();
                    </script>
+
+                   <script>
+                    // Configuration du tracking avancé
+                    const PIXEL_ID = '622556504251195';
+                    let scrollDepthSent = {
+                    '25': false,
+                    '50': false,
+                    '75': false,
+                    '90': false
+                    };
+                    let viewContentSent = false;
+                    let dwellTimeSent = false;
+                    let startTime = Date.now();
+
+                    // 1. ViewContent après 10 secondes (lecture engagée)
+                    setTimeout(() => {
+                    if (!viewContentSent) {
+                        fbq('track', 'ViewContent', {
+                        content_name: 'Advertorial - Mon Petit Nuage',
+                        content_category: 'Article',
+                        content_type: 'article',
+                        content_ids: ['advertorial_chaussons_seniors'],
+                        value: 0,
+                        currency: 'EUR'
+                        });
+                        viewContentSent = true;
+                        console.log('ViewContent event sent');
+                    }
+                    }, 10000);
+
+                    // 2. Dwell Time (60 secondes de présence)
+                    setTimeout(() => {
+                    if (!dwellTimeSent) {
+                        fbq('trackCustom', 'DwellTime', {
+                        dwell_duration: 60,
+                        content_name: 'Advertorial - Mon Petit Nuage'
+                        });
+                        dwellTimeSent = true;
+                        console.log('DwellTime 60s event sent');
+                    }
+                    }, 60000);
+
+                    // 3. Scroll Depth Tracking
+                    function trackScrollDepth() {
+                    const scrollPercent = Math.round(
+                        (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight)) * 100
+                    );
+                    
+                    // Track different scroll depths
+                    const depths = [25, 50, 75, 90];
+                    depths.forEach(depth => {
+                        if (scrollPercent >= depth && !scrollDepthSent[depth]) {
+                        fbq('trackCustom', 'ScrollDepth', {
+                            scroll_depth: depth,
+                            content_name: 'Advertorial - Mon Petit Nuage'
+                        });
+                        scrollDepthSent[depth] = true;
+                        console.log(`ScrollDepth ${depth}% event sent`);
+                        }
+                    });
+                    }
+
+                    // Écouter le scroll avec throttling
+                    let scrollTimeout;
+                    window.addEventListener('scroll', () => {
+                    if (scrollTimeout) return;
+                    scrollTimeout = setTimeout(() => {
+                        trackScrollDepth();
+                        scrollTimeout = null;
+                    }, 250);
+                    });
+
+                    // 4. CTA Click Tracking
+                    function trackCTAClick(buttonElement) {
+                    const timeSpent = Math.round((Date.now() - startTime) / 1000);
+                    
+                    // Événement Lead (conversion majeure)
+                    fbq('track', 'Lead', {
+                        content_name: 'CTA Click - Voir Offre',
+                        content_category: 'CTA',
+                        value: 59, // Valeur de l'offre
+                        currency: 'EUR',
+                        time_spent: timeSpent
+                    });
+                    
+                    // Événement custom pour plus de granularité
+                    fbq('trackCustom', 'CTA_Click', {
+                        cta_text: buttonElement.textContent,
+                        cta_position: 'main_offer',
+                        time_spent: timeSpent,
+                        scroll_before_click: Math.round(
+                        (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight)) * 100
+                        )
+                    });
+                    
+                    console.log('CTA Click events sent', { timeSpent });
+                    }
+
+                    // 5. Attacher les événements aux boutons CTA
+                    document.addEventListener('DOMContentLoaded', () => {
+                    // Sélectionner tous les boutons CTA
+                    const ctaButtons = document.querySelectorAll('a[href*="mon-petit-nuage-original"], button[onclick*="scrollToOffer"]');
+                    
+                    ctaButtons.forEach(button => {
+                        button.addEventListener('click', (e) => {
+                        trackCTAClick(button);
+                        
+                        // Si c'est un lien externe, préserver les paramètres UTM/fbclid
+                        if (button.href && button.href.includes('shopify')) {
+                            const currentUrl = new URL(window.location.href);
+                            const targetUrl = new URL(button.href);
+                            
+                            // Préserver fbclid et paramètres UTM
+                            ['fbclid', 'utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term'].forEach(param => {
+                            if (currentUrl.searchParams.has(param)) {
+                                targetUrl.searchParams.set(param, currentUrl.searchParams.get(param));
+                            }
+                            });
+                            
+                            // Ajouter un paramètre pour identifier le trafic de l'advertorial
+                            targetUrl.searchParams.set('ref', 'advertorial');
+                            targetUrl.searchParams.set('ad_time', Math.round((Date.now() - startTime) / 1000));
+                            
+                            button.href = targetUrl.toString();
+                        }
+                        });
+                    });
+                    });
+
+                    // 6. Tracking de sortie de page
+                    window.addEventListener('beforeunload', () => {
+                    const timeSpent = Math.round((Date.now() - startTime) / 1000);
+                    if (timeSpent > 30) { // Seulement si plus de 30 secondes
+                        fbq('trackCustom', 'PageExit', {
+                        time_spent: timeSpent,
+                        exit_intent: true
+                        });
+                    }
+                    });
+
+                    // 7. Enhanced Matching (si vous avez les données utilisateur)
+                    // Décommentez si vous collectez des emails via un formulaire
+                    /*
+                    function setEnhancedMatching(email, phone, firstName, lastName) {
+                    fbq('init', '622556504251195', {
+                        em: email,
+                        ph: phone,
+                        fn: firstName,
+                        ln: lastName
+                    });
+                    }
+                    */
+                    </script>
